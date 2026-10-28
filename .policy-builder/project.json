@@ -1,0 +1,28 @@
+{
+  "schema_version": 2,
+  "name": "macos remote management",
+  "module_name": "macos-remote-management",
+  "folders": [],
+  "files": [
+    {
+      "id": "20806136-a7e3-4f28-8719-06d48556ca83",
+      "name": "macos remote management",
+      "namespace": "macos_remote_management",
+      "path": "./macos_remote_management.cf",
+      "blocks": [],
+      "edges": [],
+      "groups": [],
+      "order": [],
+      "layout": {
+        "positions": {},
+        "groups": [],
+        "derived_positions": {}
+      }
+    }
+  ],
+  "current_file_id": "20806136-a7e3-4f28-8719-06d48556ca83",
+  "tool_version": "1.2.4",
+  "generated": [
+    "./macos_remote_management.cf"
+  ]
+}
