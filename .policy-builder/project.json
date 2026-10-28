@@ -9,12 +9,120 @@
       "name": "macos remote management",
       "namespace": "macos_remote_management",
       "path": "./macos_remote_management.cf",
-      "blocks": [],
-      "edges": [],
+      "condition": {
+        "kind": "class",
+        "mode": "if",
+        "className": "darwin"
+      },
+      "description": "On macOS hosts, gives each user in remote_users access to Remote Login (SSH) and Remote Management (Screen Sharing). It turns on sshd, adds the users to the SSH access group when access is restricted, grants them full Remote Management privileges, and limits Remote Management to those specified users.",
+      "blocks": [
+        {
+          "blockId": "define-variable",
+          "label": "Remote users",
+          "params": {},
+          "entries": [
+            {
+              "id": "25bff88c-8087-4e7b-9b2b-20182d3f228e",
+              "valueSourceId": "list",
+              "params": {
+                "items": "craigcomstock",
+                "variable_name": "remote_users"
+              }
+            }
+          ],
+          "instanceId": "153caab9-1715-4bf7-85e3-8b7886862379"
+        },
+        {
+          "blockId": "run-command",
+          "label": "Turn on Remote Login",
+          "params": {
+            "command": "/bin/launchctl print system/com.openssh.sshd >/dev/null 2>&1 || /bin/launchctl load -w /System/Library/LaunchDaemons/ssh.plist",
+            "run_interval": "60"
+          },
+          "instanceId": "f1694a88-3fc0-4cb5-9dd7-21e78ff65993",
+          "note": "Loads sshd only when it isn't already; launchctl rather than systemsetup, which needs Full Disk Access on recent macOS."
+        },
+        {
+          "blockId": "run-command",
+          "label": "Allow SSH for remote users",
+          "params": {
+            "command": "if /usr/bin/id -u $(vars.remote_users) >/dev/null 2>&1 && /usr/bin/dscl . -read /Groups/com.apple.access_ssh >/dev/null 2>&1 && ! /usr/sbin/dseditgroup -o checkmember -m $(vars.remote_users) com.apple.access_ssh >/dev/null 2>&1; then /usr/sbin/dseditgroup -o edit -a $(vars.remote_users) -t user com.apple.access_ssh; fi",
+            "run_interval": "60"
+          },
+          "instanceId": "2c003386-e914-4d3f-b4b4-0db80de110ea",
+          "note": "Runs once per user in remote_users. The com.apple.access_ssh group only exists when SSH is limited to some users; without it every user may already log in, so nothing is changed."
+        },
+        {
+          "blockId": "run-command",
+          "label": "Grant Remote Management to remote users",
+          "params": {
+            "command": "if /usr/bin/id -u $(vars.remote_users) >/dev/null 2>&1 && ! /usr/bin/dscl . -read /Users/$(vars.remote_users) naprivs 2>/dev/null | /usr/bin/grep -q -- -1073741569; then /System/Library/CoreServices/RemoteManagement/ARDAgent.app/Contents/Resources/kickstart -configure -access -on -privs -all -users $(vars.remote_users); fi",
+            "run_interval": "60"
+          },
+          "instanceId": "d9ae3eb5-1da0-44e3-bbcb-8421bc64b95f",
+          "note": "Runs once per user in remote_users, skipping users that don't exist or already have all privileges (naprivs -1073741569)."
+        },
+        {
+          "blockId": "run-command",
+          "label": "Turn on Remote Management for specified users",
+          "params": {
+            "command": "if ! /usr/bin/pgrep -q ARDAgent || [ \"$(const.dollar)(/usr/bin/defaults read /Library/Preferences/com.apple.RemoteManagement ARD_AllLocalUsers 2>/dev/null)\" != \"0\" ]; then /System/Library/CoreServices/RemoteManagement/ARDAgent.app/Contents/Resources/kickstart -activate -configure -allowAccessFor -specifiedUsers -restart -agent -menu; fi",
+            "run_interval": "60"
+          },
+          "instanceId": "103244f2-58dd-4cf8-8e24-dd78a74d4f44",
+          "note": "Starts the Remote Management agent (Screen Sharing included) and allows only the users granted privileges above, when it isn't already set that way."
+        }
+      ],
+      "edges": [
+        {
+          "source": "f1694a88-3fc0-4cb5-9dd7-21e78ff65993",
+          "target": "2c003386-e914-4d3f-b4b4-0db80de110ea",
+          "outcomes": [
+            "kept",
+            "repaired"
+          ],
+          "id": "26b3278e-6cea-4cbe-b78c-7c08372e1219"
+        },
+        {
+          "source": "d9ae3eb5-1da0-44e3-bbcb-8421bc64b95f",
+          "target": "103244f2-58dd-4cf8-8e24-dd78a74d4f44",
+          "outcomes": [
+            "kept",
+            "repaired"
+          ],
+          "id": "735b6e3e-2da6-47e3-8dac-cb1b0b12234b"
+        }
+      ],
       "groups": [],
-      "order": [],
+      "order": [
+        "f1694a88-3fc0-4cb5-9dd7-21e78ff65993",
+        "2c003386-e914-4d3f-b4b4-0db80de110ea",
+        "d9ae3eb5-1da0-44e3-bbcb-8421bc64b95f",
+        "103244f2-58dd-4cf8-8e24-dd78a74d4f44"
+      ],
       "layout": {
-        "positions": {},
+        "positions": {
+          "153caab9-1715-4bf7-85e3-8b7886862379": {
+            "x": -440,
+            "y": 0
+          },
+          "f1694a88-3fc0-4cb5-9dd7-21e78ff65993": {
+            "x": 0,
+            "y": 0
+          },
+          "2c003386-e914-4d3f-b4b4-0db80de110ea": {
+            "x": 0,
+            "y": 180
+          },
+          "d9ae3eb5-1da0-44e3-bbcb-8421bc64b95f": {
+            "x": 0,
+            "y": 340
+          },
+          "103244f2-58dd-4cf8-8e24-dd78a74d4f44": {
+            "x": 0,
+            "y": 540
+          }
+        },
         "groups": [],
         "derived_positions": {}
       }

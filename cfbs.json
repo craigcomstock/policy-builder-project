@@ -11,16 +11,22 @@
       "commit": "87776efb63d2ceb9b64c5459ba343ddbd688097a",
       "branch": "master",
       "added_by": "cfbs init",
-      "steps": ["run ./prepare.sh -y", "copy ./ ./"]
+      "steps": [
+        "run ./prepare.sh -y",
+        "copy ./ ./"
+      ]
     },
     {
       "name": "./macos_remote_management.cf",
       "description": "Local policy file added using cfbs command line",
-      "tags": ["local"],
+      "tags": [
+        "local"
+      ],
       "added_by": "cfbs add",
       "steps": [
         "copy ./macos_remote_management.cf services/cfbs/macos_remote_management.cf",
-        "policy_files services/cfbs/macos_remote_management.cf"
+        "policy_files services/cfbs/macos_remote_management.cf",
+        "bundles macos_remote_management:main"
       ]
     }
   ]
